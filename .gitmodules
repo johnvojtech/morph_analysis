@@ -1,0 +1,3 @@
+[submodule "derinet"]
+	path = derinet
+	url = https://github.com/vidraj/derinet
