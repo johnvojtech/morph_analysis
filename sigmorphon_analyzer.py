@@ -40,7 +40,51 @@ def first_analysis(data):
                 analysed_morphs.append((morph, "?"))
         analysed.append(analysed_morphs)
         #print(analysed_morphs)
+    return analysed, root_dict, derivation_dict, ending_dict, morph_dict, mstats
+
+def clean_signatures(analysed, root_dict, derivation_dict, ending_dict, morph_dict, stats):
+    spurious = defaultdict(list)
+    root_ls = []
+    derivation_ls = []
+    ending_ls = []
+    for a in range(len(analysed)):
+        w = analysed[a]
+        for morph in w:
+            if morph[1] == "R":
+                root_ls.append(morph)
+            elif morph[1] == "D:":
+                    derivation_ls.append(morph)
+            elif morph[1] == "E:":
+                    ending_ls.append(morph)
+    
+        spurious_roots = [x for x in root_ls if x[1] in ending_ls or x[1] in derivation_ls]
+        if len(root_ls) - len(spurious_roots) <= 0:
+            spurious_roots.sort(key=lambda x:stats[x][0])
+            spurious_roots = spurious_roots[1:]
+        for sr in spurious_roots:
+            root_ls.remove(sr)
+            root_dict[sr] -= 1
+        spurious_derivations = [x for x in derivation_ls if x[1] in ending_ls]
+        for x in spurious_derivations:
+            if ending_dict[x] > derivation_dict[x]:
+                derivation_dict[x] -= 1
+            elif x in ending_ls:
+                ending_dict[x] -= 1
+        new_w = []
+        for i in range(len(w)):
+            real_morph = w[i]
+            morph = real_morph[0]
+            if real_morph in root_ls:
+                new_w.append((morph, "R"))
+            elif real_morph in derivation_ls:
+                new_w.append((morph, "D"))
+            elif real_morph in ending_ls:
+                new_w.append((morph, "E"))
+            else:
+                new_w.append((morph, "?"))
+        analysed[a] = new_w
     return analysed, root_dict, derivation_dict, ending_dict, morph_dict
+        
 
 def fill_in(analysis, root_dict, derivation_dict, ending_dict, morph_dict, correction=3):
     prefixes = defaultdict(int)
@@ -130,7 +174,8 @@ def fill_in(analysis, root_dict, derivation_dict, ending_dict, morph_dict, corre
     return analysis
 
 def analyze(data):
-    analysed, root_dict, derivation_dict, ending_dict, morph_dict = first_analysis(data)
+    analysed, root_dict, derivation_dict, ending_dict, morph_dict, stats = first_analysis(data)
+    analysed, root_dict, derivation_dict, ending_dict, morph_dict = clean_signatures(analysed, root_dict, derivation_dict, ending_dict, morph_dict, stats)
     analysis = fill_in(analysed, root_dict, derivation_dict, ending_dict, morph_dict)
     for word_tag in analysis:
         word = " ".join([item[0] for item in word_tag])
