@@ -11,7 +11,6 @@ def load_data(filename, column=0):
 def first_analysis(data):
     morphs, mstats = ma.statistics(data)
     analysed = []
-
     root_dict = defaultdict(int)
     derivation_dict = defaultdict(int)
     ending_dict = defaultdict(int)
@@ -27,16 +26,20 @@ def first_analysis(data):
         for i in range(len(word)):
             morph = word[i]
             morph_dict[morph] += 1
+            resolved = False
             if any(item[1] == i for item in roots):
                 analysed_morphs.append((morph, "R"))
                 root_dict[morph] += 1
-            elif any(item[1] == i for item in endings):
-                analysed_morphs.append((morph, "E"))
+                resolved = True
+            if any(item[1] == i for item in endings):
+                analysed_morphs.append((morph, "F"))
                 ending_dict[morph] += 1
-            elif any(item[1] == i for item in derivations):
+                resolved = True
+            if any(item[1] == i for item in derivations):
                 analysed_morphs.append((morph, "D"))
                 derivation_dict[morph] += 1
-            else:
+                resolved = True
+            if not resolved:
                 analysed_morphs.append((morph, "?"))
         analysed.append(analysed_morphs)
         #print(analysed_morphs)
@@ -54,7 +57,7 @@ def clean_signatures(analysed, root_dict, derivation_dict, ending_dict, morph_di
                 root_ls.append(morph)
             elif morph[1] == "D:":
                     derivation_ls.append(morph)
-            elif morph[1] == "E:":
+            elif morph[1] == "F:":
                     ending_ls.append(morph)
     
         spurious_roots = [x for x in root_ls if x[1] in ending_ls or x[1] in derivation_ls]
@@ -79,7 +82,7 @@ def clean_signatures(analysed, root_dict, derivation_dict, ending_dict, morph_di
             elif real_morph in derivation_ls:
                 new_w.append((morph, "D"))
             elif real_morph in ending_ls:
-                new_w.append((morph, "E"))
+                new_w.append((morph, "F"))
             else:
                 new_w.append((morph, "?"))
         analysed[a] = new_w
@@ -102,7 +105,7 @@ def fill_in(analysis, root_dict, derivation_dict, ending_dict, morph_dict, corre
             morph, tag = analysed_word[i]
             rde = [root_dict[morph], derivation_dict[morph], ending_dict[morph]]
             if max(rde) > correction * sum(rde) / 3:
-                analysed_word[i] = ["R","D","E"][rde.index(max(rde))]
+                analysed_word[i] = ["R","D","F"][rde.index(max(rde))]
 
         if not any(item[1] == "R" for item in analysed_word):
             maxitem = max(analysed_word, key=lambda x: root_dict[x[0]]/(root_dict[morph]+derivation_dict[morph]+ending_dict[morph]))
@@ -117,7 +120,7 @@ def fill_in(analysis, root_dict, derivation_dict, ending_dict, morph_dict, corre
                     if i < first_root:
                         first_root = i
                 elif all(ending_dict[morph_1] >= derivation_dict[morph_1] for morph_1 in analysed_word[i:]):
-                    analysed_word[i] = (morph, "E")
+                    analysed_word[i] = (morph, "F")
                 else:
                     analysed_word[i] = (morph, "D")
             elif tag == "R":
@@ -133,7 +136,7 @@ def fill_in(analysis, root_dict, derivation_dict, ending_dict, morph_dict, corre
             morph, tag = analysed_word[i]
             if end or (tag == "E" and i > last_root):
                 end = True
-                analysis[j][i] = (morph, "E")
+                analysis[j][i] = (morph, "F")
             elif i < first_root:
                 prefixes[morph] += 1
                 analysis[j][i] = (morph, "P")
