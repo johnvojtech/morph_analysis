@@ -6,6 +6,6 @@ echo $right
 echo $total
 echo $(echo "scale=3;100 * $right/$total"|bc)
 result=$(echo "100 * $right/$total"|bc);
-echo $result >> $2;
+echo $result % >> $2;
 paste -d ":" <(cat test.tsv|cut -f 2|grep -o .) <(cat $1|cut -f 2|grep -o .)|sort|uniq -c
 
