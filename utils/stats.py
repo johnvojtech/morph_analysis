@@ -88,20 +88,20 @@ def statistics(data, name, lexicon):
             depth += 1
         for morph in morphs:
             depths[morph].append(depth)
-
+    """
     left_counts = {morph:sum([bigrams[morph][j] for j in bigrams[morph].keys()]) for morph in morphs}
     right_counts = {morph:sum([bigrams[i][morph] for i in bigrams.keys()]) for morph in morphs}
-    """
+    
     for morph in morphs:
         cont = [word for word in data if morph in word]
         freq = len(cont) / len(data)
         length = len(morph)
         """
         avg_depth = sum(depths[morph])/(len(depths[morph]) + 1)
-
+        """
         entropy_left = - sum([c_e(bigrams[i][morph]/N, right_counts[morph]/N) for i in bigrams.keys()])
         entropy_right = - sum([c_e(bigrams[morph][j]/N, left_counts[morph]/N) for j in bigrams.keys()])
-        """
-        morph_stats[morph] = (length, freq) #, 2**(entropy_left+entropy_right), avg_depth)
+        
+        morph_stats[morph] = (length, freq, abs(entropy_left - entropy_right))
 
-    return morphs, morph_stats
+    return morph_stats

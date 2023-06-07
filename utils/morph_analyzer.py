@@ -5,16 +5,20 @@ import utils.preprocessing as dp
 from collections import defaultdict
 import pickle
 import utils.stats as stats
+import utils.roots as rs
 import derinet.lexicon as dlex
 
 lexicon = dlex.Lexicon()
 lexicon.load('derinet/tools/data-api/derinet2/derinet-2-0.tsv')
-d = dp.load("old_sigmorphon22")
+d = dp.load("sig22")
 form_lemma, forms, tag_forms, form_tags = d[0], d[1], d[2], d[3]
 #tag_ending = tag_endings()
 
+def pass_on():
+    return lexicon, form_lemma, forms, tag_forms, form_tags
+
 def statistics(data):
-    return stats.statistics(data, "old_sigmorphon22", lexicon)
+    return stats.statistics(data, "sig22", lexicon)
 
 def load_data(filename):
     with open(filename, "r") as reader:
@@ -45,35 +49,17 @@ def tag_endings():
 tag_ending = tag_endings()
 
 def find_roots(word, mstats):
-    viable = [m for m in word if m in mstats.keys()]
-    lexemes = lexicon.get_lexemes(lemma="".join(word))
-    roots = [lexeme.get_tree_root() for lexeme in lexemes]
-    for root in roots:
-        lemmas = [child.lemma.lower() for child in root.iter_subtree()]
-        schemata = cs.get_schemata(lemmas)
-        candidates = []
-        if len(schemata) > 0:
-            candidates = [seg for seg in word if any(cs.agrees(seg, schema) for schema in schemata)]
-        if len(candidates) == 0:
-            candidates = viable
-    root = min(viable, key = lambda x: mstats[x][1])   #THIS COULD BE TRAINED
-    return [(root, word.index(root))]
+    return rs.roots(word, mstats)
 
 def find_derivations(word):
     lemma = form_lemma["".join(word)].split("-")[0]
     lexemes = lexicon.get_lexemes(lemma=lemma)
-    #print("D")
-    #print(word)
-    #print(lemma)
-    #print(lexemes)
     if len(lexemes) > 0:
         root = lexemes[0].get_tree_root()
         depth = 0
         current = lexemes[0]
         while len(current.all_parents) > 0:
             parent = current.all_parents[0]
-            #f len(parent.lemma) < len(current.lemma):
-            #   depth += 1
             current = parent
         derivations = stats.fit_lemmas(root.lemma, "#".join(word))#:depth]
         return derivations
@@ -83,7 +69,6 @@ def find_endings_backup(word):
     lemma = form_lemma["".join(word)]
     fs = forms[lemma]
     w = "".join(word)
-    #print(fs)
     endings = set()
     max_i = 0
     min_j = len(w)
@@ -114,7 +99,6 @@ def find_endings_backup(word):
         if w_ending <= 0:
             end_morphs.append((word[i], i))
         w_ending -= len(word[i])
-     
     return end_morphs
 
 
@@ -144,12 +128,6 @@ def find_endings(word):
         w_ending -= len(word[i])
         if w_ending < 0:
             end_morphs.append((word[i], i))
-    #print(word)
-    #print(possible_tags)
-    #print(possible_endings)
-    #print(end_morphs)
     if len(end_morphs) == 0:
         return find_endings_backup(word)
     return [x for y in end_morphs for x in y]
-
-find_endings_backup(["nej", "do", "ved", "n", "ějš", "ích"])

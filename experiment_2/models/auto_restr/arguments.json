@@ -1,0 +1,1 @@
+{"corpus_dir": "corpora/finetune_corpus", "model_dir": "models/auto_restr", "num_epoch": 100, "lr": 0.001, "weight_decay": 0.0, "batch_size": 64, "device": null, "max_seq_len": 100, "val_split": 0.2, "test_split": 0.2, "recovery": true, "save_best_val_model": true, "embedding_dim": 100, "hidden_dim": 128, "num_rnn_layers": 1, "rnn_type": "lstm"}

@@ -19,7 +19,6 @@ def lemmatize(data,name,tag_sample=1000):
         return preprocessed
     form_lemma = defaultdict(str)
     check_form = set(["".join(item) for item in data])
-    #print(check_form)
     forms_dict = defaultdict(list)
     tag_forms = defaultdict(list)
     form_tags = defaultdict(str)
@@ -34,6 +33,11 @@ def lemmatize(data,name,tag_sample=1000):
                 new_lemma = item[0].split("_")[0]
                 if len(tag_forms[item[1]]) < tag_sample:
                     tag_forms[item[1]].append(item[2])
+                if item[2] in check_form:
+                    form_lemma[item[2]] = lemma
+                    form_tags[item[2]] = item[1]
+                    al += 1
+                    append = True
                 if new_lemma != lemma:
                     if append:
                         forms_dict[lemma] = forms.copy()
@@ -42,11 +46,6 @@ def lemmatize(data,name,tag_sample=1000):
                     lemma = new_lemma
                 else:
                     forms.append(item[2])
-                if item[2] in check_form:
-                    form_lemma[item[2]] = lemma
-                    form_tags[item[2]] = item[1]
-                    al += 1
-                    append = True
 
     os.mkdir("data/"+name)
     with open("data/" + name + "/form_lemma.pickle","wb") as w1:
@@ -58,3 +57,10 @@ def lemmatize(data,name,tag_sample=1000):
     with open("data/"+name + "/form_tags.pickle","wb") as w:
         pickle.dump(form_tags, w)
     return form_lemma, forms_dict, tag_forms
+
+def load_data(filename):
+    with open(filename, "r+") as r:
+        return [s.lower().strip().split("\t")[3].split() for s in r.readlines()]
+
+if __name__ == "__main__":
+    lemmatize(load_data(sys.argv[1]), "sig22")
